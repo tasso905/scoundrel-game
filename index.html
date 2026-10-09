@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Scoundrel: a solo dungeon-crawl card game played with a standard deck.">
+  <meta name="theme-color" content="#0e0f1a">
+  <title>Scoundrel</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#room-heading">Skip to the room</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <path d="M16 3 27 9v9c0 6-4.6 9.8-11 11-6.4-1.2-11-5-11-11V9l11-6Z" fill="currentColor" opacity=".18"/>
+        <path d="M16 3 27 9v9c0 6-4.6 9.8-11 11-6.4-1.2-11-5-11-11V9l11-6Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M16 10c-2.6 2.6-4.5 4.4-4.5 6.6a2.6 2.6 0 0 0 4 2.2L14.6 22h2.8l-.9-3.2a2.6 2.6 0 0 0 4-2.2c0-2.2-1.9-4-4.5-6.6Z" fill="currentColor"/>
+      </svg>
+      <div>
+        <h1>Scoundrel</h1>
+        <p class="tagline">A solo dungeon crawl in 44 cards</p>
+      </div>
+    </div>
+
+    <nav class="controls" aria-label="Game controls">
+      <button type="button" class="btn" id="btn-new" aria-keyshortcuts="N">
+        <span>New game</span><kbd aria-hidden="true">N</kbd>
+      </button>
+      <button type="button" class="btn" id="btn-restart" aria-keyshortcuts="R">
+        <span>Restart</span><kbd aria-hidden="true">R</kbd>
+      </button>
+      <button type="button" class="btn btn--ghost" id="btn-help" aria-haspopup="dialog" aria-keyshortcuts="H">
+        <span>Rules</span><kbd aria-hidden="true">H</kbd>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <!-- HUD ---------------------------------------------------------------->
+    <section class="hud" aria-label="Status">
+      <div class="hud-panel hud-health" id="hud-health">
+        <div class="hud-label" id="health-label">Health</div>
+        <div class="health-value"><span id="health-value">20</span><span class="health-max">/ 20</span></div>
+        <div class="meter" id="health-meter" role="meter" aria-labelledby="health-label"
+             aria-valuemin="0" aria-valuemax="20" aria-valuenow="20" aria-valuetext="20 of 20 health">
+          <div class="meter-fill" id="health-fill"></div>
+        </div>
+      </div>
+
+      <div class="hud-panel hud-weapon" id="hud-weapon" aria-labelledby="weapon-label">
+        <div class="hud-label" id="weapon-label">Weapon</div>
+        <div class="weapon-row">
+          <div class="weapon-chip" id="weapon-chip" aria-hidden="true">—</div>
+          <dl class="weapon-stats">
+            <div><dt>Value</dt><dd id="weapon-value">Bare hands</dd></div>
+            <div><dt>Last defeated</dt><dd id="weapon-last">—</dd></div>
+          </dl>
+        </div>
+        <ol class="weapon-stack" id="weapon-stack" aria-label="Monsters slain with this weapon"></ol>
+      </div>
+
+      <div class="hud-panel hud-stats">
+        <dl class="stats">
+          <div><dt>Room</dt><dd id="stat-turn">1</dd></div>
+          <div><dt>Dungeon</dt><dd id="stat-deck">40</dd></div>
+          <div><dt>Discard</dt><dd id="stat-discard">0</dd></div>
+        </dl>
+        <p class="hud-flags" id="hud-flags"></p>
+      </div>
+    </section>
+
+    <!-- Room --------------------------------------------------------------->
+    <section class="room" aria-labelledby="room-heading">
+      <div class="room-head">
+        <div>
+          <h2 id="room-heading" tabindex="-1">Room 1</h2>
+          <p class="room-status" id="room-status"></p>
+        </div>
+        <div class="avoid-wrap">
+          <button type="button" class="btn btn--avoid" id="btn-avoid" aria-keyshortcuts="A"
+                  aria-describedby="avoid-reason">
+            <span>Avoid room</span><kbd aria-hidden="true">A</kbd>
+          </button>
+          <p class="avoid-reason" id="avoid-reason"></p>
+        </div>
+      </div>
+
+      <ol class="room-grid" id="room-grid" aria-label="Cards in this room"></ol>
+
+      <div class="game-over" id="game-over" hidden>
+        <p class="game-over-title" id="game-over-title"></p>
+        <div class="game-over-actions">
+          <button type="button" class="btn btn--primary" data-action="new">New game</button>
+          <button type="button" class="btn" data-action="restart">Replay this dungeon</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action log --------------------------------------------------------->
+    <section class="log-panel" aria-labelledby="log-heading">
+      <h2 id="log-heading">Action log</h2>
+      <ol class="log" id="log" role="log" aria-live="polite" aria-relevant="additions"
+          aria-labelledby="log-heading" tabindex="0"></ol>
+    </section>
+
+    <!-- Debug (hidden by default) ------------------------------------------>
+    <section class="debug-panel" id="debug-panel" aria-labelledby="debug-heading" hidden>
+      <h2 id="debug-heading">Debug</h2>
+      <div class="debug-grid">
+        <div>
+          <p class="debug-row">Seed: <code id="debug-seed"></code></p>
+          <form class="seed-form" id="seed-form">
+            <label for="seed-input">Play a seed</label>
+            <div class="seed-input-row">
+              <input id="seed-input" name="seed" type="text" autocomplete="off" spellcheck="false"
+                     placeholder="e.g. 1A2B3C or any phrase">
+              <button type="submit" class="btn">Play</button>
+            </div>
+          </form>
+          <label class="toggle">
+            <input type="checkbox" id="debug-reveal">
+            <span>Reveal dungeon order</span>
+          </label>
+        </div>
+        <div>
+          <p class="debug-row" id="debug-summary"></p>
+          <ol class="debug-deck" id="debug-deck" aria-label="Dungeon order, top first" hidden></ol>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p class="shortcuts">
+      <span><kbd>1</kbd>–<kbd>4</kbd> resolve card</span>
+      <span><kbd>Shift</kbd>+<kbd>1</kbd>–<kbd>4</kbd> fight bare-handed</span>
+      <span><kbd>A</kbd> avoid</span>
+      <span><kbd>H</kbd> rules</span>
+    </p>
+    <button type="button" class="link-btn" id="btn-debug" aria-expanded="false" aria-controls="debug-panel">
+      Debug panel
+    </button>
+  </footer>
+
+  <!-- Rules modal ---------------------------------------------------------->
+  <dialog class="modal modal--wide" id="help-dialog" aria-labelledby="help-title">
+    <div class="modal-head">
+      <h2 id="help-title">How to play Scoundrel</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Close rules">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body rules">
+      <p class="lede">Fight your way through a 44-card dungeon. Clear every card to win; reach 0 health and you're slain.</p>
+
+      <h3>The cards</h3>
+      <ul class="legend">
+        <li><span class="swatch swatch--monster" aria-hidden="true">♠♣</span><div><strong>Monsters</strong> — all clubs and spades. Value 2–10, J 11, Q 12, K 13, A 14.</div></li>
+        <li><span class="swatch swatch--weapon" aria-hidden="true">♦</span><div><strong>Weapons</strong> — diamonds 2–10. Reduce monster damage by their value.</div></li>
+        <li><span class="swatch swatch--potion" aria-hidden="true">♥</span><div><strong>Potions</strong> — hearts 2–10. Heal by their value, up to 20.</div></li>
+      </ul>
+
+      <h3>Each room</h3>
+      <p>Four cards are dealt face up. Choose one:</p>
+      <ul>
+        <li><strong>Face it</strong> — resolve any 3 of the 4 cards, in any order. The 4th card stays and becomes the first card of the next room.</li>
+        <li><strong>Avoid it</strong> — slide all 4 cards to the bottom of the dungeon. You can't avoid two rooms in a row, and once you resolve a card you're committed.</li>
+      </ul>
+
+      <h3>Weapons</h3>
+      <p>Picking up a weapon equips it right away. Your old weapon, and every monster stacked on it, is discarded.</p>
+      <p>Fighting with a weapon, you take <em>monster − weapon</em> damage (never below 0), and the monster is stacked on the weapon.</p>
+      <div class="example">
+        <p class="example-title">The weapon only goes down</p>
+        <p>After a kill, the weapon can only be used on monsters of <strong>equal or lower</strong> value than the last one it slew.</p>
+        <ol>
+          <li>Equip ♦5, then fight ♠J (11) → take 6. Last defeated: 11.</li>
+          <li>Fight ♣6 → 6 ≤ 11, so take 1. Last defeated: 6.</li>
+          <li>♠8 appears → 8 &gt; 6, so ♦5 can't be used. Bare-handed: take 8.</li>
+        </ol>
+        <p>Tip: you can always choose to fight bare-handed to keep a weapon's chain high for a bigger monster later.</p>
+      </div>
+
+      <h3>Potions</h3>
+      <div class="example">
+        <p class="example-title">One potion per room</p>
+        <p>Only the first potion you use in a room heals. Any other potion in that room is discarded with no effect.</p>
+        <p>At 14 health with ♥5 and ♥9 in the room: drink ♥9 to reach 20 (the extra 3 is lost). The ♥5 does nothing if used in this room, so it's often better to leave it as your carried card.</p>
+      </div>
+
+      <h3>Scoring</h3>
+      <ul>
+        <li><strong>Win</strong>: score = your remaining health.</li>
+        <li><strong>Lose</strong>: score = minus the total value of monsters still in the dungeon and room.</li>
+      </ul>
+
+      <h3>Keyboard</h3>
+      <dl class="keys">
+        <div><dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Resolve the card in that slot (with your weapon, if usable)</dd></div>
+        <div><dt><kbd>Shift</kbd> + <kbd>1</kbd>–<kbd>4</kbd></dt><dd>Fight that monster bare-handed</dd></div>
+        <div><dt><kbd>A</kbd></dt><dd>Avoid the room</dd></div>
+        <div><dt><kbd>N</kbd> / <kbd>R</kbd></dt><dd>New game / restart this dungeon</dd></div>
+        <div><dt><kbd>H</kbd> or <kbd>?</kbd></dt><dd>Open these rules</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close a dialog</dd></div>
+      </dl>
+    </div>
+  </dialog>
+
+  <!-- End-of-game modal ---------------------------------------------------->
+  <dialog class="modal" id="end-dialog" aria-labelledby="end-title" aria-describedby="end-summary">
+    <div class="end-banner" id="end-banner" aria-hidden="true"></div>
+    <div class="modal-body end-body">
+      <h2 id="end-title"></h2>
+      <p class="end-score"><span class="end-score-label">Score</span><span id="end-score"></span></p>
+      <p id="end-summary"></p>
+      <p class="end-records" id="end-records"></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-close>View board</button>
+      <button type="button" class="btn" data-action="restart">Replay dungeon</button>
+      <button type="button" class="btn btn--primary" data-action="new">New game</button>
+    </div>
+  </dialog>
+
+  <!-- Confirm modal -------------------------------------------------------->
+  <dialog class="modal modal--small" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <div class="modal-body">
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-text"></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" value="cancel" data-close>Cancel</button>
+      <button type="button" class="btn btn--primary" id="confirm-ok">Confirm</button>
+    </div>
+  </dialog>
+
+  <script src="js/rng.js"></script>
+  <script src="js/deck.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
